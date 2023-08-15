@@ -6,7 +6,7 @@ var unityWebView =
         $containers = $('.webviewContainer');
         if ($containers.length === 0) {
             $('<div style="position: absolute; left: 0px; width: 100%; height: 100%; top: 0px; pointer-events: none;"><div class="webviewContainer" style="overflow: hidden; position: relative; width: 100%; height: 100%; z-index: 1;"></div></div>')
-                .appendTo($('#unity-container'));
+                .appendTo($('#container'));
         }
         var $last = $('.webviewContainer:last');
         var clonedTop = parseInt($last.css('top')) - 100;
@@ -52,11 +52,11 @@ var unityWebView =
     },
 
     setMargins: function (name, left, top, right, bottom) {
-        var container = $('#unity-container');
+        var container = $('#container');
         var r = (container.hasClass('unity-desktop')) ? window.devicePixelRatio : 1;
         var w0 = container.width() * r;
         var h0 = container.height() * r;
-        var canvas = $('#unity-canvas');
+        var canvas = $('#canvas');
         var w1 = canvas.attr('width');
         var h1 = canvas.attr('height');
 
@@ -66,7 +66,7 @@ var unityWebView =
         var hp = (h1 - top - bottom) / h0 * 100;
 
         this.iframe(name)
-            .css('left', lp + '%')
+            .css('left', w0/2 + 'px')
             .css('top', tp + '%')
             .css('width', wp + '%')
             .css('height', hp + '%');
