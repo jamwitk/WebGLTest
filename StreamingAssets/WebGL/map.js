@@ -35,8 +35,7 @@ async function initMap () {
 var portPolygon;
 
 function definePortPolygon () {
-    
-   o var inside = [
+    var inside = [
         new google.maps.LatLng(22.545118388314883, 88.31677119460629),
         new google.maps.LatLng(22.545267021972453, 88.31612210002469),
         new google.maps.LatLng(22.545205091301252, 88.31585656133221),
