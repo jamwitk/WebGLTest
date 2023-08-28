@@ -29,7 +29,7 @@ function onButtonClick () {
         
         console.log("Message sent to Unity: " + message);
         
-        parent.unityWebView.sendMessage('VirtualYardManager', 'SetData', message);
+        parent.unityWebView.sendMessage('VirtualYard', 'SetData', message);
     }
 }
 
