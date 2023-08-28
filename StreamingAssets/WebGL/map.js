@@ -26,7 +26,7 @@ async function initMap () {
         fillOpacity: 0.05
     });
     
-    document.getElementsByClassName ("clear")[0].addEventListener ("click", clearMap);
+    document.getElementById("clear").addEventListener ("click", clearMap);
     
     poly.setMap (map);
     map.addListener ('click', addLatLng);
