@@ -26,7 +26,7 @@ async function initMap () {
         fillOpacity: 0.05
     });
     
-    document.getElementsByClassName ("class ismi")[0].addEventListener ("click", clearMap);
+    document.getElementsByClassName ("clear")[0].addEventListener ("click", clearMap);
     
     poly.setMap (map);
     map.addListener ('click', addLatLng);
@@ -57,7 +57,7 @@ function definePortPolygon () {
     };
     //create a hole in the polygon
     
-    portPolygon = new google.maps.Polygon (polyOptions);
+    portPolygon = new google.maps.Polygon (polyOptins);
     portPolygon.setMap (map);
     
     //portPolygon.setPath (everythingElse,paths);
