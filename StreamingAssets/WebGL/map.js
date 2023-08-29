@@ -49,7 +49,6 @@ function definePortPolygon () {
         new google.maps.LatLng(22.544085667031744, 88.31576255809281)
     ]
     var polyOptins = {
-        //neon orange color
         paths: [inside],
         strokeColor: '#FF6D00',
         strokeOpacity: 1,
