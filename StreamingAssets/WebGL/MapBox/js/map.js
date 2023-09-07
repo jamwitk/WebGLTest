@@ -48,6 +48,11 @@ function init () {
         let maxRow = Math.floor(min / rowDistance);
         let maxColumn = Math.floor(max / columnDistance);
         
+        
+        //2D array
+        let grid = [];
+        
+        
         for (let i = 0; i <= maxRow; i++) {
             let rowBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][3]));
             let rowDestination = turf.destination(turf.point(feature.features[0].geometry.coordinates[0][0]), rowDistance * i, rowBearing, {units: 'meters'});
@@ -57,6 +62,10 @@ function init () {
             });
             rowMarker.setLngLat(rowDestination.geometry.coordinates);
             rowMarker.addTo(map);
+            
+            //push the row the grid [i][j]
+            grid.push([]);
+            
             for (let j = 0; j <= maxColumn; j++) {
                 //create a destination point from the row and column by distance 2,35 and 2,59
                 let bearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][1]));
@@ -66,12 +75,17 @@ function init () {
                     color: "#FF6D00",
                     draggable: false
                 });
-                //set the marker to the center of the grid
                 marker.setLngLat(destination.geometry.coordinates);
-                //add the marker to the map
                 marker.addTo(map);
+                //push the column to the grid [i][j]
+                grid[i].push(destination.geometry.coordinates);
             }
             
+        }
+        for (let i = 0; i < grid.length; i++) {
+            for(let j = 0; j < grid[i].length; j++){
+                console.log(i+"."+j+"."+grid[i][j]);
+            }
         }
         
             
