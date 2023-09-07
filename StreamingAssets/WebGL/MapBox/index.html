@@ -8,22 +8,17 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
+  
   <script type="text/javascript" src="js/button-scripts.js"></script>
   <script type="module" src="js/map.js"></script>
+  
   <style>
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    #createYard { display: block; position: relative;}
   </style>
 </head>
 <body>
 <div id='map'></div>
-<br>
-<button id="createYard" onclick="onButtonClick()">Create a Yard</button>
-<button id="clear">Clear</button>
-
-
 </body>
-
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 </html>
