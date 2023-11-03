@@ -22,13 +22,13 @@ function onButtonClick(){
         message += element[1] + " " + element[0] + "-"; 
     }
     console.log("Message sent to Unity: " + message);
-    window.unityInstance.sendMessage("WebViewObject","CallFromJS",message);
+    window.unityInstance.SendMessage("WebViewObject","CallFromJS",message);
 }
 function setDataWithMessage(m_path){
     path = m_path;
 }
 function removeDataWithMessage(){
-    window.unityInstance.sendMessage("WebViewObject","CallFromJS","REMOVE");
+    window.unityInstance.SendMessage("WebViewObject","CallFromJS","REMOVE");
 }
 // class CalculateControl
 // {
