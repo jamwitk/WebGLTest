@@ -1,5 +1,6 @@
 ﻿let draw;
-
+let m_feature;
+let layerCount = 0;
 function init () {
     mapboxgl.accessToken = 'pk.eyJ1IjoiY21lb2RldiIsImEiOiJjbGxwNDN2bHMwMmU0M3FwZXJkNWNrYTFwIn0.ZcjQqSU2qF7xR38xEvnoUA';
     //Harita oluşturma
@@ -24,78 +25,27 @@ function init () {
     map.addControl( new mapboxgl.FullscreenControl() );
     map.addControl( new mapboxgl.ScaleControl() );
     map.addControl( new UnityControl());
-    map.addControl( new CalculateControl());
     
     //Harita çizim olayları
     map.on('draw.create', function (feature) {
-        //check if the [0,0] coordinate is inside the polygon
-        
-        //find the coordinates of the 5 meter from the point
-        const rowDistance = 2.35;
-        const columnDistance = 2.59;
-        
-        let distances= [];
-        for (let i = 0; i < feature.features[0].geometry.coordinates[0].length-1; i++) {
-            let pointOne = turf.point(feature.features[0].geometry.coordinates[0][i]);
-            let pointTwo = turf.point(feature.features[0].geometry.coordinates[0][(i + 1) % feature.features[0].geometry.coordinates[0].length]);
-            let distance = turf.distance(pointOne, pointTwo);
-            distances.push(distance*1000);
-        }
-        let max = Math.max(...distances); // column
-        let min = Math.min(...distances); // row
-        console.log("Max: "+max+" Min: "+min);
-        console.log("Feature: "+feature.features[0].geometry.coordinates);
-        let maxRow = Math.floor(min / rowDistance);
-        let maxColumn = Math.floor(max / columnDistance);
-        
-        
-        //2D array
-        let grid = [];
-        
-        
-        for (let i = 0; i <= maxRow; i++) {
-            let rowBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][3]));
-            let rowDestination = turf.destination(turf.point(feature.features[0].geometry.coordinates[0][0]), rowDistance * i, rowBearing, {units: 'meters'});
-            var rowMarker = new mapboxgl.Marker({
-                color: "#FF6D00",
-                draggable: false
-            });
-            rowMarker.setLngLat(rowDestination.geometry.coordinates);
-            rowMarker.addTo(map);
-            
-            //push the row the grid [i][j]
-            grid.push([]);
-            
-            for (let j = 0; j <= maxColumn; j++) {
-                //create a destination point from the row and column by distance 2,35 and 2,59
-                let bearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][1]));
-                let destination = turf.destination(rowDestination.geometry.coordinates, columnDistance * j, bearing, {units: 'meters'});
-                //create a marker
-                var marker = new mapboxgl.Marker({
-                    color: "#FF6D00",
-                    draggable: false
-                });
-                marker.setLngLat(destination.geometry.coordinates);
-                marker.addTo(map);
-                //push the column to the grid [i][j]
-                grid[i].push(destination.geometry.coordinates);
-            }
-            
-        }
-        for (let i = 0; i < grid.length; i++) {
-            for(let j = 0; j < grid[i].length; j++){
-                console.log(i+"."+j+"."+grid[i][j]);
-            }
-        }
-        
-            
-        setDataWithMessage(draw.getAll().features[0].geometry.coordinates[0]);
+        m_feature = feature;
+        createGrid(map, m_feature);
     });
     map.on ('draw.update', function (feature) {
+        m_feature = feature;
         setDataWithMessage(draw.getAll().features[0].geometry.coordinates[0]);
     });
     map.on ('draw.delete', function (feature) {
-        setDataWithMessage(draw.getAll().features[0].geometry.coordinates[0]);
+        m_feature = feature;
+        //remove all layers and sources
+        console.log("Removing all layers")
+        for(let i = 0; i < layerCount; i++)
+        {
+            map.removeLayer('polygon'+i);
+            map.removeLayer('line'+i);
+            map.removeSource('polygon'+i);
+        }
+        removeDataWithMessage();
     });
     
     
@@ -112,7 +62,7 @@ function init () {
         //add the DEM source as a terrain layer with exaggerated height
         map.setTerrain ({
             'source': 'mapbox-dem',
-            'exaggeration': 1
+            'exaggeration': 0
         });
         //add a sky layer that will show when the map is highly pitched
         map.addLayer ({
@@ -125,42 +75,198 @@ function init () {
             }
         });
     });
-    map.once('idle', function () {
-        const elevation = Math.floor(
-// Do not use terrain exaggeration to get actual meter values
-            map.queryTerrainElevation([88.314204, 22.542378], { exaggerated: false })
-        );
-        //document.getElementsByClassName("mapboxgl-calc-ctrl")[0].onclick = calculateAlongPath();
-        console.log(elevation+" is the elevation");
-    });
+    
+//     map.once('idle', function () {
+//         const elevation = Math.floor(
+// // Do not use terrain exaggeration to get actual meter values
+//             map.queryTerrainElevation([88.314204, 22.542378], { exaggerated: false })
+//         );
+//         //document.getElementsByClassName("mapboxgl-calc-ctrl")[0].onclick = calculateAlongPath();
+//         console.log(elevation+" is the elevation");
+//     });
     //createGrid(map);
     
 }
-function createGrid (map) {
-    var points = turf.randomPoint(30, {bbox: [22.542378, 40,  88.314204,22.542378]});
+function createGrid (map, feature) {
 
-// add a random property to each point
-    turf.featureEach(points, function(point) {
-        point.properties.elevation = Math.random() * 10;
-    });
-    var options = {gridType: 'points', property: 'elevation', units: 'kilometres'};
-    var grid = turf.interpolate(points, 500, options);
-    let k = 0;
-    for(let i = 0; i < grid.features.length; i++){
-        //creat a marker
-        var marker = new mapboxgl.Marker({
-            color: "#FF6D00",
-            draggable: false
-        });
-        console.log("Created "+grid.features[i].geometry.coordinates)
-        //set the marker to the center of the grid
-        marker.setLngLat(grid.features[i].geometry.coordinates);
-        //add the marker to the map
-        marker.addTo(map);
-        k++;
+    //remove last coordinates from the feature in draw
+    // console.log("Before: "+feature.features[0].geometry.coordinates[0].length)
+    // feature.features[0].geometry.coordinates[0].pop();
+    // console.log("After: "+feature.features[0].geometry.coordinates[0].length)
+    // draw.deleteAll();
+    // draw.add(feature.features[0]);
+
+    const rowDistance = 2.35;
+    const columnDistance = 2.59;
+
+    let distances= [];
+    let maxDistance = 0;
+    let minDistance = 100;
+    let maxDistanceIndex = 0;
+    let minDistanceIndex = 0;
+
+    for (let i = 0; i < feature.features[0].geometry.coordinates[0].length-1; i++) {
+        let pointOne = turf.point(feature.features[0].geometry.coordinates[0][i]);
+        let secondPoint = (i + 1) % feature.features[0].geometry.coordinates[0].length;
+        let pointTwo = turf.point(feature.features[0].geometry.coordinates[0][secondPoint]);
+        let distance = turf.distance(pointOne, pointTwo);
+        if(distance > maxDistance)
+        {
+            maxDistance = distance;
+            if(i === 0 && secondPoint === 1 || i === 2 && secondPoint === 3)
+                maxDistanceIndex = 1;
+            if(i === 1 && secondPoint === 2 || i === 3 && secondPoint === 4)
+                maxDistanceIndex = 3;
+
         }
-    console.log("Created "+k+" markers")
-    
+        if(distance <= minDistance)
+        {
+            minDistance = distance;
+            if(i === 0 && secondPoint === 1 || i === 2 && secondPoint === 3)
+                minDistanceIndex = 1;
+            if(i === 1 && secondPoint === 2 || i === 3 && secondPoint === 4)
+                minDistanceIndex = 3;
+        }
+
+        distances.push(distance*1000);
+    }
+    //console.log("Max Distance Index: "+maxDistanceIndex+" Min Distance Index: "+minDistanceIndex);
+    let max = maxDistance * 1000; //Math.max(...distances); // column
+    let min =  minDistance * 1000; //Math.min(...distances); // row
+    let maxRow = Math.floor(min / rowDistance);
+    let maxColumn = Math.floor(max / columnDistance);
+
+
+    //2D array
+    let grid = [];
+
+
+    let columnBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][maxDistanceIndex]));
+    let rowBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][minDistanceIndex]));
+    //make sure the difference between column and row bearing is 90 degrees or 270 degrees
+
+
+    let difference = rowBearing - columnBearing;
+
+
+    if(rowBearing - columnBearing > 0){
+        let left = Math.abs(difference - 90);
+        let right = Math.abs(difference - 270);
+
+        if(rowBearing - columnBearing > 270){
+            rowBearing += 270 - (rowBearing - columnBearing);
+        }
+        else if(rowBearing - columnBearing > 90 && left > right){
+            rowBearing += 270 - (rowBearing - columnBearing);
+        }
+        else if(rowBearing - columnBearing > 90 && left < right){
+            rowBearing += 90 - (rowBearing - columnBearing);
+        }
+        else if(rowBearing - columnBearing > 90){
+            rowBearing += 90 - (rowBearing - columnBearing);
+        }
+    }
+    else if(rowBearing - columnBearing < 0) {
+        let left = Math.abs(90 + difference );
+        let right = Math.abs(270 + difference);
+
+        if (rowBearing - columnBearing < 90 && left < right)
+        {
+            rowBearing -= 90 +(rowBearing - columnBearing);
+        }
+        else if(rowBearing - columnBearing < 90 && left > right)
+        {
+            rowBearing -= 270 + (rowBearing - columnBearing);
+        }
+        else if (rowBearing - columnBearing < 270 && left < right)
+        {
+            rowBearing -= 90 + (rowBearing - columnBearing);
+        }
+        else if (rowBearing - columnBearing < 270)
+        {
+            rowBearing -= 270 + (rowBearing - columnBearing);
+        }
+    }
+
+
+
+
+
+
+    for (let i = 0; i <= maxRow; i++) {
+        let rowDestination = turf.destination(turf.point(feature.features[0].geometry.coordinates[0][0]), rowDistance * i, rowBearing, {units: 'meters'});
+        grid.push([]);
+
+        for (let j = 0; j <= maxColumn; j++) {
+
+            let destination = turf.destination(rowDestination.geometry.coordinates, columnDistance * j, columnBearing, {units: 'meters'});
+            grid[i].push(destination.geometry.coordinates);
+        }
+
+    }
+    let groups = [];
+    for (let i = 0; i < grid.length - 1; i++) {
+        for(let j = 0; j < grid[i].length - 1; j++){
+            let group = [];
+            group.push(grid[i][j]);
+            group.push(grid[i][j+1]);
+            group.push(grid[i+1][j+1]);
+            group.push(grid[i+1][j]);
+            group.push(grid[i][j]);
+            groups.push(group);
+        }
+    }
+    for(let i = 0; i < groups.length; i++)
+    {
+        let line = [];
+        let group = groups[i];
+        for (let j = 0; j < group.length; j++) {
+            line.push (group[j]);
+        }
+
+        line.push (line[0]);
+        var polygon = turf.polygon ([line]);
+
+        map.addSource ('polygon'+i, {
+            'type': 'geojson',
+            'data':
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [polygon.geometry.coordinates[0]]
+                    }
+                }
+        });
+        map.addLayer ({
+            'id': 'polygon'+i,
+            'type': 'fill',
+            'source': 'polygon'+i,
+            'layout': {
+            },
+            'paint': {
+                'fill-color': '#FF6DDD',
+                'fill-opacity': 0.5
+            },
+
+        });
+        map.addLayer ({
+            'id': 'line'+i,
+            'type': 'line',
+            'source': 'polygon'+i,
+            'layout': {
+            },
+            'paint': {
+                'line-color': '#FF6D00',
+                'line-width': 3
+            }
+        });
+
+
+        layerCount++;
+    }
+
+    setDataWithMessage(feature.features[0].geometry.coordinates[0]);
 }
 
 function createDefaultStroke (map) {
