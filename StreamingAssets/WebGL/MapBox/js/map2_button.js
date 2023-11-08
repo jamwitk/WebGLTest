@@ -9,42 +9,27 @@ function onButtonClick(){
         const p1 = path[i];
         const p2 = path[(i + 1) % path.length];
         const distance = turf.distance(p1, p2);
-        distances.push(distance);
+        if(distance !== 0)
+            distances.push(distance * 1000); // convert from km to m
     }
     area = turf.area(turf.polygon([path]));
     // write biggest distance
     const max = Math.max(...distances);
     const min = Math.min(...distances);
-    message = area + "-" + max + "-" + min +"-";
+    message = area + "-" + max + "-" + min;
     
-    for (let i = 0; i < path.length; i++) {
+    for (let i = 0; i < path.length - 1; i++) {
         const element = path[i];
-        message += element[1] + " " + element[0] + "-"; 
+        message += "-" + element[1] + " " + element[0]; 
     }
-    console.log("Message sent to Unity: " + message);
-    Unity.call(message);
+    parent.unityWebView.sendMessage('WebViewObject',message);
 }
 function setDataWithMessage(m_path){
     path = m_path;
 }
-// class CalculateControl
-// {
-//     onAdd(map){
-//         this._map = map;
-//         this._container = document.createElement('div');
-//         this._container.className = 'mapboxgl-ctrl-group mapboxgl-ctrl';
-//         let customButton = document.createElement('button');
-//         customButton.className = 'mapboxgl-calc-ctrl';
-//         //add description to button
-//         customButton.title = 'Calculate';
-//         this._container.appendChild(customButton);
-//         return this._container;
-//     }   
-//     onRemove(){
-//         this._container.parentNode.removeChild(this._container);
-//         this._map = undefined;
-//     }
-// }
+function removeDataWithMessage(){
+    parent.unityWebView.sendMessage('WebViewObject',"REMOVE");
+}
 class UnityControl{
     onAdd(map){
         this._map = map;
