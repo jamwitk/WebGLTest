@@ -9,6 +9,7 @@ function clear () {
     area = 0;
     message = "";
 }
+
 function onButtonClick () {
     if (path.length === 4) {
         for (let i = 0; i < path.getLength(); i++) {
@@ -28,12 +29,10 @@ function onButtonClick () {
             "-" + path.getAt(3).lat() + " " + path.getAt(3).lng();
         
         console.log("Message sent to Unity: " + message);
-        
-        window.Unity.call(message);
+        parent.unityWebView.sendMessage('WebViewObject',message);
         
     }
 }
-
 function setDataWithMessage (m_path) {
     path = m_path;
 }

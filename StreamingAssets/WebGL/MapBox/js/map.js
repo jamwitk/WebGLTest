@@ -1,6 +1,6 @@
 ﻿let draw;
 let m_feature;
-let layerCount;
+let layerCount = 0;
 function init () {
     mapboxgl.accessToken = 'pk.eyJ1IjoiY21lb2RldiIsImEiOiJjbGxwNDN2bHMwMmU0M3FwZXJkNWNrYTFwIn0.ZcjQqSU2qF7xR38xEvnoUA';
     //Harita oluşturma
@@ -18,19 +18,18 @@ function init () {
             trash: true,
         },
     });
-    
+
     //Harita kontrolleri
     map.addControl (draw);
     map.addControl( new mapboxgl.NavigationControl() );
     map.addControl( new mapboxgl.FullscreenControl() );
     map.addControl( new mapboxgl.ScaleControl() );
     map.addControl( new UnityControl());
-    
+
     //Harita çizim olayları
-    let layerCount = 0;
     map.on('draw.create', function (feature) {
-        createGrid(map, feature);
         m_feature = feature;
+        createGrid(map, m_feature);
     });
     map.on ('draw.update', function (feature) {
         m_feature = feature;
@@ -45,11 +44,10 @@ function init () {
             map.removeLayer('line'+i);
             map.removeSource('polygon'+i);
         }
-        
-        setDataWithMessage(draw.getAll().features[0].geometry.coordinates[0]);
+        removeDataWithMessage();
     });
-    
-    
+
+
     // Liman sınırlarının çizilmesi
     map.on ('load', function () {
         createDefaultStroke(map);
@@ -76,17 +74,17 @@ function init () {
             }
         });
     });
-    
-    map.once('idle', function () {
-        const elevation = Math.floor(
-// Do not use terrain exaggeration to get actual meter values
-            map.queryTerrainElevation([88.314204, 22.542378], { exaggerated: false })
-        );
-        //document.getElementsByClassName("mapboxgl-calc-ctrl")[0].onclick = calculateAlongPath();
-        console.log(elevation+" is the elevation");
-    });
+
+//     map.once('idle', function () {
+//         const elevation = Math.floor(
+// // Do not use terrain exaggeration to get actual meter values
+//             map.queryTerrainElevation([88.314204, 22.542378], { exaggerated: false })
+//         );
+//         //document.getElementsByClassName("mapboxgl-calc-ctrl")[0].onclick = calculateAlongPath();
+//         console.log(elevation+" is the elevation");
+//     });
     //createGrid(map);
-    
+
 }
 function createGrid (map, feature) {
 
@@ -106,7 +104,7 @@ function createGrid (map, feature) {
     let maxDistanceIndex = 0;
     let minDistanceIndex = 0;
 
-    for (let i = 0; i < feature.features[0].geometry.coordinates[0].length-1; i++) {
+    for (let i = 0; i < feature.features[0].geometry.coordinates[0].length - 1; i++) {
         let pointOne = turf.point(feature.features[0].geometry.coordinates[0][i]);
         let secondPoint = (i + 1) % feature.features[0].geometry.coordinates[0].length;
         let pointTwo = turf.point(feature.features[0].geometry.coordinates[0][secondPoint]);
@@ -131,14 +129,14 @@ function createGrid (map, feature) {
 
         distances.push(distance*1000);
     }
-    console.log("Max Distance: "+maxDistance+" Min Distance: "+minDistance);
     //console.log("Max Distance Index: "+maxDistanceIndex+" Min Distance Index: "+minDistanceIndex);
     let max = maxDistance * 1000; //Math.max(...distances); // column
     let min =  minDistance * 1000; //Math.min(...distances); // row
     let maxRow = Math.floor(min / rowDistance);
     let maxColumn = Math.floor(max / columnDistance);
-
-
+    
+    setRowWithMessage(maxRow, maxColumn);
+    
     //2D array
     let grid = [];
 
@@ -146,9 +144,7 @@ function createGrid (map, feature) {
     let columnBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][maxDistanceIndex]));
     let rowBearing = turf.bearing(turf.point(feature.features[0].geometry.coordinates[0][0]), turf.point(feature.features[0].geometry.coordinates[0][minDistanceIndex]));
     //make sure the difference between column and row bearing is 90 degrees or 270 degrees
-    console.log("Column Bearing: "+columnBearing+" Row Bearing: "+rowBearing);
-    console.log("Column Bearing - Row Bearing: "+(columnBearing - rowBearing));
-    console.log("Row Bearing - Column Bearing: "+(rowBearing - columnBearing));
+
 
     let difference = rowBearing - columnBearing;
 
@@ -195,8 +191,6 @@ function createGrid (map, feature) {
 
 
 
-    console.log("Row Bearing - Column Bearing: "+(rowBearing - columnBearing));
-    console.log("Column Bearing: "+columnBearing+" Row Bearing: "+rowBearing);
 
 
     for (let i = 0; i <= maxRow; i++) {

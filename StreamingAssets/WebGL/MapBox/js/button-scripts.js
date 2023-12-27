@@ -2,49 +2,40 @@
 var distances = [];
 var area = 0;
 var message = "";
+let maxRow = 0;
+let maxColumn = 0;
 function onButtonClick(){
     if(path.length <= 0 || path.length !== 5)
         return;
-    for (let i = 0; i < path.length; i++) {
-        const p1 = path[i];
-        const p2 = path[(i + 1) % path.length];
-        const distance = turf.distance(p1, p2);
-        distances.push(distance);
-    }
+    
     area = turf.area(turf.polygon([path]));
     // write biggest distance
-    const max = Math.max(...distances);
-    const min = Math.min(...distances);
-    message = area + "-" + max + "-" + min +"-";
     
-    for (let i = 0; i < path.length; i++) {
+    message = area + "-" + maxRow + "-" + maxColumn;
+    
+    for (let i = 0; i < path.length - 1; i++) {
         const element = path[i];
-        message += element[1] + " " + element[0] + "-"; 
+        message += "-" + element[1] + " " + element[0];
     }
     console.log("Message sent to Unity: " + message);
-    Unity.call(message);
+    parent.unityWebView.sendMessage('WebViewObject',message);
 }
 function setDataWithMessage(m_path){
     path = m_path;
 }
-// class CalculateControl
-// {
-//     onAdd(map){
-//         this._map = map;
-//         this._container = document.createElement('div');
-//         this._container.className = 'mapboxgl-ctrl-group mapboxgl-ctrl';
-//         let customButton = document.createElement('button');
-//         customButton.className = 'mapboxgl-calc-ctrl';
-//         //add description to button
-//         customButton.title = 'Calculate';
-//         this._container.appendChild(customButton);
-//         return this._container;
-//     }   
-//     onRemove(){
-//         this._container.parentNode.removeChild(this._container);
-//         this._map = undefined;
-//     }
-// }
+function setRowWithMessage(m_maxRow, m_maxColumn){
+    maxRow = m_maxRow;
+    maxColumn = m_maxColumn;
+}
+function removeDataWithMessage(){
+    path = [];
+    distances = [];
+    area = 0;
+    message = "";
+    maxRow = 0;
+    minRow = 0;
+    parent.unityWebView.sendMessage('WebViewObject',"REMOVE");
+}
 class UnityControl{
     onAdd(map){
         this._map = map;
@@ -55,7 +46,7 @@ class UnityControl{
         createIconFromBase64(customButton);
         customButton.title = 'Send to Unity';
         this._container.appendChild(customButton);
-        
+
         return this._container;
     }
     onRemove(){
